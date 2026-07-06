@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Style"
+  short_description: "Strict modern Python style rules."
+  default_prompt: "Use $code-style to implement concise, strict, modern Python code."
