@@ -4,6 +4,8 @@ Strict modern Python code-style guidance for Codex, focused on Pydantic v2, Fast
 
 Repository: <https://github.com/HONG-LOU/codex-code-style-skill>
 
+Chinese reading copy: [docs/zh-CN/code-style-skill.md](docs/zh-CN/code-style-skill.md). This copy is for GitHub reading only and is not an installable Codex skill entrypoint.
+
 ## Quick Install
 
 Clone this repository into your Codex skills directory as `code-style`.
