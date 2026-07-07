@@ -1,25 +1,25 @@
 ---
 name: code-style
-description: Use when writing, editing, reviewing, refactoring, testing, committing, pushing, or shipping Python code in any project, especially Pydantic v2, SQLAlchemy 2.x, PostgreSQL, FastAPI, async code, API design, backend architecture, performance, pytest, uv, modern Python 3.12+ typing, concise expressive code, file slimming, adjacent cleanup, or avoiding Any, bare dicts, dict.get, dynamic attribute access, dead code, redundant comments, and unnecessary FastAPI descriptions.
+description: Use when writing, editing, reviewing, refactoring, testing, committing, pushing, or shipping Python code, project structure, or repo configuration, especially Pydantic v2, SQLAlchemy 2.x, PostgreSQL, FastAPI, routers, services, repositories, package layout, docs, tooling, backend architecture, performance, pytest, uv, modern Python typing, file slimming, adjacent cleanup, or avoiding Any, raw dicts, misplaced logic, dead code, and unnecessary FastAPI descriptions.
 ---
 
 # Code Style
 
-Apply this skill whenever touching Python code. Optimize for correctness, small code, explicit contracts, boring reliability, and compatibility with the current project.
+Apply this skill whenever touching Python code, project layout, repo config, tests, or technical docs. Optimize for correctness, small code, explicit contracts, boring reliability, and compatibility with the current project.
 
-Core principle: code must be typed, short, direct, reusable, and obvious. Use modern Python and Pydantic v2 to express constraints declaratively so business logic stays small. If raw data, dynamic access, or manual conversion reaches business logic, push validation and normalization back to the boundary.
+Core principle: code and files must be typed, short, direct, reusable, and obvious. Project structure should make boundaries visible: HTTP entrypoints, business use cases, domain rules, persistence, external adapters, tests, config, and docs each belong in the smallest clear home. If raw data, dynamic access, manual conversion, or misplaced logic reaches business logic, push validation, normalization, and orchestration back to the right boundary.
 
 ## Operating Rules
 
-1. Read the local project first: `pyproject.toml`, lockfiles, lint/type/test config, existing package layout, representative modules, and tests.
+1. Read the local project first: `pyproject.toml`, lockfiles, lint/type/test config, existing package layout, representative modules, docs, and tests.
 2. Follow existing working patterns unless they conflict with correctness, security, modern APIs, or the user's explicit request.
 3. Prefer the smallest change that fully solves the task. Do not introduce frameworks, base classes, services, repositories, factories, metaclasses, decorators, or middleware unless they remove real complexity now.
 4. Make invalid states unrepresentable with types, constrained models, database constraints, and focused functions.
 5. Keep public boundaries strict and explicit; keep internals simple.
 6. Avoid compatibility with obsolete Python or library versions unless the project requires it.
 7. Convert raw external data to typed objects at the edge. Do not pass raw dictionaries through service, builder, repository, or domain logic.
-8. Inspect the immediate upstream and downstream of touched code: callers, callees, nearby tests, shared schemas, sibling modules, and repeated local patterns.
-9. Improve adjacent code when it is directly related, low risk, and verifiable. Do not expand into unrelated rewrites.
+8. Inspect the immediate upstream and downstream of touched code: callers, callees, nearby tests, shared schemas, sibling modules, package boundaries, config, docs, and repeated local patterns.
+9. Improve adjacent code or file organization when it is directly related, low risk, and verifiable. Do not expand into unrelated rewrites.
 10. Define the behavior-preserving boundary before refactoring. Behavior changes must be explicit, requested or required, and tested.
 11. Delete useless code, comments, metadata, whitespace, and characters whenever you touch nearby code.
 12. Verify with the narrowest meaningful command first, then broader checks when the change has wider blast radius.
@@ -36,6 +36,20 @@ Prefer these defaults when the project does not already define versions:
 - CI hygiene: locked installs, type checking, tests, and dependency/security checks for maintained services.
 
 Do not churn a project just to update syntax. Modernize only touched code or code needed for the task.
+
+## Project Organization
+
+Read [references/project-organization.md](references/project-organization.md) before changing package layout, routers, services, repositories, dependencies, settings, scripts, docs, migrations, tests, CI, or root-level config.
+
+Hard defaults:
+
+- Make the architecture legible from the tree. Prefer clear feature/domain packages for non-trivial services; keep tiny projects simple until extra layers remove real complexity.
+- Keep routers and other entrypoints thin. Move business decisions, orchestration, transactions, and external workflow logic to services or use-case functions when touching that behavior path.
+- Keep import direction one way: entrypoint/adapters -> services/use cases -> domain -> persistence/external adapters. Inner layers must not import FastAPI, CLI, job, or router modules.
+- Put persistence code in repositories, query helpers, or data modules; keep them free of business decisions and HTTP-specific types.
+- Keep repo root boring: package code, tests, docs, migrations, scripts, lockfiles, and tool config should have obvious homes. Do not leave random importable modules, throwaway scripts, duplicate configs, or stale docs near touched work.
+- Improve existing organization in the touched path and its immediate upstream/downstream. Rename, move, or split files only when behavior is covered or the change is mechanical and easy to verify.
+- Do not perform broad architecture migrations, layer creation, `src/` migrations, package reshuffles, or docs rewrites unless the task requires them and tests make the blast radius acceptable.
 
 ## Code Shape
 
@@ -68,7 +82,7 @@ Do not churn a project just to update syntax. Modernize only touched code or cod
 ## Adjacent Code Cleanup
 
 - Treat every touched area as a small maintenance window. Check the caller path, callee path, nearby tests, sibling modules, and shared schemas for the same smell you are already fixing.
-- Fix adjacent issues when they are in the same behavior path and can be verified with the same or slightly broader tests: duplicated conversion, stale names, raw dict leakage, missing boundary validation, unnecessary comments, dead branches, unused code, redundant FastAPI metadata, or inconsistent Pydantic usage.
+- Fix adjacent issues when they are in the same behavior path and can be verified with the same or slightly broader tests: misplaced router logic, duplicated conversion, stale names, raw dict leakage, missing boundary validation, unnecessary comments, dead branches, unused code, redundant FastAPI metadata, inconsistent Pydantic usage, or stale docs/config.
 - Keep behavior stable. Do not change database semantics, API contracts, auth behavior, transaction boundaries, query cardinality, or error semantics as incidental cleanup.
 - Do not perform broad renames, architecture migrations, repository rewrites, or cross-cutting style churn unless the task requires it or tests make the blast radius acceptable.
 - If the adjacent cleanup is valuable but risky, leave it out of the patch and mention it as follow-up instead of bundling it silently.
@@ -206,6 +220,7 @@ Hard defaults:
 - Prefer explicit attribute assignment over loops that copy dictionaries into objects.
 - Prefer `model_fields_set` over truthiness checks for partial updates where `0`, `False`, or `""` may be valid values.
 - Prefer improving touched callers, callees, and tests over leaving nearby directly related rot in place.
+- Prefer moving misplaced behavior to the nearest existing layer over inventing a new architecture pattern.
 - Prefer `selectinload` for collection relationships and explicit eager loading over accidental lazy loads.
 - Prefer `datetime` with timezone awareness for persisted timestamps.
 - Prefer structured concurrency (`asyncio.TaskGroup`) over bare `asyncio.gather` when failures must cancel siblings or propagate predictably.
@@ -227,6 +242,9 @@ Hard defaults:
 - Useless comments, commented-out code, dead code, decorative separators, and blank-line noise.
 - Obvious FastAPI `summary`, `description`, `response_description`, or parameter descriptions.
 - Premature architecture layers.
+- Misplaced business logic in routers, dependencies, repositories, migrations, scripts, config modules, or tests.
+- Inner-layer imports from FastAPI routers, CLI/job entrypoints, or web-only schemas.
+- Root-level loose modules, duplicate config files, stale docs, and vague cross-domain `utils.py` modules.
 - Broad incidental rewrites that are not covered by tests or required for the current behavior path.
 - Broad `except Exception`.
 - `os.getenv()` in business logic.
@@ -254,6 +272,7 @@ Before finishing Python work, confirm the diff has:
 - Pydantic or type-system features used to remove avoidable boilerplate without hiding behavior.
 - Immediate callers, callees, nearby tests, and sibling patterns checked for directly related cleanup.
 - Adjacent refactors limited to behavior-preserving, verifiable changes.
+- Project organization issues in the touched path checked: misplaced logic, wrong layer imports, stale docs/config, vague helper modules, and root clutter.
 - API/router changes keep HTTP concerns separate from business logic.
 - Query/list changes consider pagination, eager loading, indexes, and transaction scope.
 - Files are slimmer: no new dead code, commented-out code, useless comments, decorative separators, or obvious FastAPI descriptions.
